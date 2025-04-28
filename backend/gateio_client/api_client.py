@@ -131,9 +131,6 @@ class GateioClient:
             canceled_order = spot_api.cancel_order(order_id, currency_pair) # Placeholder method
             print(f"Order canceled: {canceled_order}")
             return canceled_order
-        except Exception as e:
-            print(f"Error canceling order: {e}")
-            return None
 
     # TODO: Add methods for placing and canceling orders using order API keys
     # The above methods are placeholders and need to be adapted for futures trading and confirmed with SDK docs.
