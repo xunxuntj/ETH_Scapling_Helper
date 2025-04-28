@@ -52,10 +52,10 @@ class GateioClient:
             # Assuming Gate.io futures API has a method to list positions
             # Need to confirm the exact method and parameters from SDK docs
             positions = self.futures_api.list_futures_positions(contract=currency_pair) # Placeholder method and parameter
-            return positions
         except Exception as e:
             print(f"Error fetching open positions: {e}")
             return None
+        return positions
 
     def amend_order(self, order_id: str, new_stop_loss: float = None, new_take_profit: float = None):
         """Amends an existing order to update stop loss and/or take profit."""
@@ -127,10 +127,12 @@ class GateioClient:
 
         try:
             # Assuming Gate.io spot API has a cancel_order method
-            # Need to confirm the exact method and parameters from SDK docs
             canceled_order = spot_api.cancel_order(order_id, currency_pair) # Placeholder method
             print(f"Order canceled: {canceled_order}")
             return canceled_order
+        except Exception as e:
+            print(f"Error canceling order: {e}")
+            return None
 
     # TODO: Add methods for placing and canceling orders using order API keys
     # The above methods are placeholders and need to be adapted for futures trading and confirmed with SDK docs.
