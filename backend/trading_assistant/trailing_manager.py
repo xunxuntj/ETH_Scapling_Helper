@@ -3,6 +3,7 @@ class TrailingManager:
         self.initial_stop_loss_usd = initial_stop_loss_usd
         self.initial_take_profit_usd = initial_take_profit_usd
         self.trailing_trigger_usd = trailing_trigger_usd
+        self.strategy_rules = {} # Placeholder for specific strategy rules
 
     def calculate_current_levels(self, open_price: float, current_price: float, atr_value: float, position_direction: str):
         """Calculates current dynamic stop loss and take profit levels."""

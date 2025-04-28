@@ -11,6 +11,7 @@ class AtrTrailing:
         """Calculates dynamic trailing stop loss and take profit levels based on ATR."""
         # This is a basic example. More sophisticated trailing stops exist.
         # TODO: Refine trailing logic based on specific strategy rules (e.g., parabolic SAR, fixed percentage)
+        pass # Placeholder
 
         if position_direction == "long":
             stop_loss = current_price - atr_value * multiplier

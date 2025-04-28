@@ -60,7 +60,7 @@ class GateioClient:
         try:
             # Assuming Gate.io futures API has a method to list positions
             # Need to confirm the exact method and parameters from SDK docs
-            positions = self.futures_api.list_futures_positions(contract=currency_pair) # Placeholder method and parameter
+            positions = self.futures_api.list_futures_positions(contract=currency_pair, currency_pair=currency_pair) # Placeholder method and parameter
         except Exception as e:
             print(f"Error fetching open positions: {e}")
             return None
@@ -145,3 +145,4 @@ class GateioClient:
 
     # TODO: Add methods for placing and canceling orders using order API keys
     # The above methods are placeholders and need to be adapted for futures trading and confirmed with SDK docs.
+    pass # Placeholder

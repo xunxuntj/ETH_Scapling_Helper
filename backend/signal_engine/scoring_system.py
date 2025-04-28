@@ -54,6 +54,7 @@ class ScoringSystem:
         # Add deduction based on high ATR (requires ATR value as input)
         # TODO: Define a proper threshold for high ATR (e.g., relative to average price or historical ATR)
         high_atr_threshold = 5.0 # Example threshold
+        pass # Placeholder for proper threshold
 
         if atr_value > high_atr_threshold:
             score -= 1.0 # Example deduction for high volatility

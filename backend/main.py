@@ -34,6 +34,8 @@ trailing_manager = TrailingManager(INITIAL_STOP_LOSS_USD, INITIAL_TAKE_PROFIT_US
 # Handle potential None values for Telegram credentials
 telegram_bot_token = settings.TELEGRAM_BOT_TOKEN if settings.TELEGRAM_BOT_TOKEN else "" # TODO: Add proper error handling if None
 telegram_chat_id = settings.TELEGRAM_CHAT_ID if settings.TELEGRAM_CHAT_ID else "" # TODO: Add proper error handling if None
+if not telegram_bot_token or not telegram_chat_id:
+    print("Telegram bot token or chat ID not set. Telegram notifications will be disabled.")
 telegram_notifier = TelegramNotifier(telegram_bot_token, telegram_chat_id)
 
 async def run_trading_logic():
@@ -69,6 +71,7 @@ async def run_trading_logic():
 
         # TODO: Pass large timeframe trend to scoring system
         large_timeframe_trend = "sideways" # Placeholder
+        pass # Placeholder
 
         # 3. Calculate signal score
         # Extract necessary data from df for scoring
@@ -92,6 +95,7 @@ async def run_trading_logic():
             # TODO: Add other relevant signal details from indicators and patterns
             "signal_type": "BUY" if signal_score >= SIGNAL_SCORE_STRONG and current_trend_status == "uptrend" else "SELL" if signal_score >= SIGNAL_SCORE_STRONG and current_trend_status == "downtrend" else "NEUTRAL" # Basic signal type
         }
+        pass # Placeholder
 
         # Log signal to the database
         db_signal = models.Signal(
@@ -99,8 +103,10 @@ async def run_trading_logic():
             details=signal_details['details'],
             trend_direction=signal_details['trend_direction'],
             # TODO: Map other signal details to model fields
-            signal_type=signal_details['signal_type']
+            signal_type=signal_details['signal_type'],
+            # Placeholder for other signal details
         )
+        pass # Placeholder
         
         # Add session and commit to database
         db_session = next(db.get_db()) # Get a database session
@@ -138,6 +144,7 @@ async def run_trading_logic():
                 current_price = df['close'].iloc[-1] # Use the latest close price
                 # TODO: Get ATR value for the current timeframe (maybe from the calculated df)
                 current_atr_for_trailing = df['ATR_14'].iloc[-1] if 'ATR_14' in df.columns else 0.0 # Using the calculated ATR
+                # Placeholder for ATR value
 
                 needs_adjustment, new_stop_loss, new_take_profit = trailing_manager.check_for_adjustment(
                     trade_data,
@@ -154,38 +161,48 @@ async def run_trading_logic():
 
                     # Log the adjustment to the database (placeholder)
                     # TODO: Log the stop loss/take profit adjustment in the database (e.g., in the Trade table or a separate adjustments table)
+                    pass # Placeholder for logging stop loss/take profit adjustment
 
 
         # 7. Log trades and capital snapshots
         # Implement logic to log trade executions and closures when they occur (placeholder)
         # TODO: Integrate actual trade execution/closure logging when order management is implemented
         # Example placeholder:
-        # if trade_executed:
-        #     db_trade = models.Trade(...) # Create Trade object
-        #     db_session = next(db.get_db())
-        #     try:
-        #         db_session.add(db_trade)
-        #         db_session.commit()
-        #         db_session.refresh(db_trade)
-        #     finally:
-        #         db_session.close()
+        trade_executed = False # Placeholder
+        if trade_executed:
+            db_trade = models.Trade(
+                open_price=0.0, # Placeholder
+                close_price=0.0, # Placeholder
+                profit=0.0, # Placeholder
+                signal_id=db_signal.id # Placeholder
+            ) # Create Trade object
+            db_session = next(db.get_db())
+            try:
+                db_session.add(db_trade)
+                db_session.commit()
+                db_session.refresh(db_trade)
+            finally:
+                db_session.close()
+            pass # Placeholder
 
 
         # Implement logic to periodically log capital snapshots (placeholder)
         # TODO: Fetch actual capital from GateIO and log to database periodically
         # Example: Log capital snapshot every hour or day
         # Example placeholder:
-        # if time_to_log_capital_snapshot(): # Implement this check
-        #     current_capital = gateio_client.get_account_balance("USDT") # Fetch capital
-        #     if current_capital is not None:
-        #         db_capital_snapshot = models.CapitalSnapshot(total_capital=current_capital, funding_phase_id=None) # TODO: Determine funding phase ID
-        #         db_session = next(db.get_db())
-        #         try:
-        #             db_session.add(db_capital_snapshot)
-        #             db_session.commit()
-        #             db_session.refresh(db_capital_snapshot)
-        #         finally:
-        #             db_session.close()
+        time_to_log_capital_snapshot = True # Placeholder
+        if time_to_log_capital_snapshot: # Implement this check
+            current_capital = gateio_client.get_account_balance("USDT") # Fetch capital
+            if current_capital is not None:
+                db_capital_snapshot = models.CapitalSnapshot(total_capital=current_capital, funding_phase_id=None) # TODO: Determine funding phase ID
+                db_session = next(db.get_db())
+                try:
+                    db_session.add(db_capital_snapshot)
+                    db_session.commit()
+                    db_session.refresh(db_capital_snapshot)
+                finally:
+                    db_session.close()
+            pass # Placeholder
 
 
         # 8. Send notifications
@@ -197,10 +214,13 @@ async def run_trading_logic():
         # Example: Send trade notification when a trade is opened or closed
         # TODO: Call telegram_notifier.send_trade_notification() when trades are executed or closed
         # Example placeholder calls:
-        # if trade_opened:
-        #     telegram_notifier.send_trade_notification({"action": "Opened", "symbol": TRADING_PAIR, "price": open_price, "notes": "Trade opened based on signal"})
-        # if trade_closed:
-        #     telegram_notifier.send_trade_notification({"action": "Closed", "symbol": TRADING_PAIR, "price": close_price, "profit": profit, "notes": "Trade closed"})
+        trade_opened = False # Placeholder
+        trade_closed = False # Placeholder
+        if trade_opened:
+            telegram_notifier.send_trade_notification({"action": "Opened", "symbol": TRADING_PAIR, "price": 0.0, "notes": "Trade opened based on signal"}) # Placeholder
+        if trade_closed:
+            telegram_notifier.send_trade_notification({"action": "Closed", "symbol": TRADING_PAIR, "price": 0.0, "profit": 0.0, "notes": "Trade closed"}) # Placeholder
+        pass # Placeholder
 
 
         await asyncio.sleep(SIGNAL_REFRESH_INTERVAL_SECONDS)
@@ -214,4 +234,7 @@ async def startup_event():
 def read_root():
     return {"message": "ETH Scalping Assistant Backend"}
 
-# TODO: Add API endpoints for frontend to interact with (e.g., get signals, get trades, manual trade management)
+@app.get("/signals")
+def get_signals():
+    # TODO: Implement logic to fetch signals from the database
+    return {"message": "Latest trading signals"}
