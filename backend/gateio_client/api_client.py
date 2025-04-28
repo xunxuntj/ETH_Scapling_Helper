@@ -57,6 +57,34 @@ class GateioClient:
             print(f"Error fetching open positions: {e}")
             return None
 
+    def amend_order(self, order_id: str, new_stop_loss: float = None, new_take_profit: float = None):
+        """Amends an existing order to update stop loss and/or take profit."""
+        # TODO: Adapt for futures orders if necessary
+        # Need to use the order API keys for trading operations
+        order_configuration = gate_api.Configuration(
+            key=self.order_api_key,
+            secret=self.order_secret_key
+        )
+        order_api_client = gate_api.ApiClient(order_configuration)
+        spot_api = gate_api.SpotApi(order_api_client)
+
+        # TODO: Construct the amend order parameters based on GateIO API requirements
+        amend_params = {}
+        if new_stop_loss is not None:
+            amend_params['stop_loss'] = str(new_stop_loss)
+        if new_take_profit is not None:
+            amend_params['take_profit'] = str(new_take_profit)
+
+        try:
+            # Assuming Gate.io spot API has an amend_order method
+            # Need to confirm the exact method and parameters from SDK docs
+            amended_order = spot_api.amend_order(order_id, amend_params) # Placeholder method
+            print(f"Order amended: {amended_order}")
+            return amended_order
+        except Exception as e:
+            print(f"Error amending order: {e}")
+            return None
+
     def place_order(self, currency_pair: str, side: str, amount: float, price: float = None):
         """Places a spot order."""
         # TODO: Adapt for futures orders if necessary
@@ -74,7 +102,6 @@ class GateioClient:
             amount=str(amount),
             price=str(price) if price is not None else "", # Pass empty string instead of None for price
             # TODO: Add other necessary order parameters (e.g., time_in_force, order_type)
-            # TODO: Handle market orders where price is not provided
         )
 
         try:
