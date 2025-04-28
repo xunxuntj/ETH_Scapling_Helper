@@ -159,10 +159,34 @@ async def run_trading_logic():
         # 7. Log trades and capital snapshots
         # Implement logic to log trade executions and closures when they occur (placeholder)
         # TODO: Integrate actual trade execution/closure logging when order management is implemented
+        # Example placeholder:
+        # if trade_executed:
+        #     db_trade = models.Trade(...) # Create Trade object
+        #     db_session = next(db.get_db())
+        #     try:
+        #         db_session.add(db_trade)
+        #         db_session.commit()
+        #         db_session.refresh(db_trade)
+        #     finally:
+        #         db_session.close()
+
 
         # Implement logic to periodically log capital snapshots (placeholder)
         # TODO: Fetch actual capital from GateIO and log to database periodically
         # Example: Log capital snapshot every hour or day
+        # Example placeholder:
+        # if time_to_log_capital_snapshot(): # Implement this check
+        #     current_capital = gateio_client.get_account_balance("USDT") # Fetch capital
+        #     if current_capital is not None:
+        #         db_capital_snapshot = models.CapitalSnapshot(total_capital=current_capital, funding_phase_id=None) # TODO: Determine funding phase ID
+        #         db_session = next(db.get_db())
+        #         try:
+        #             db_session.add(db_capital_snapshot)
+        #             db_session.commit()
+        #             db_session.refresh(db_capital_snapshot)
+        #         finally:
+        #             db_session.close()
+
 
         # 8. Send notifications
         # Use TelegramNotifier to send signal and trade notifications
@@ -172,6 +196,11 @@ async def run_trading_logic():
              telegram_notifier.send_signal_notification(signal_details)
         # Example: Send trade notification when a trade is opened or closed
         # TODO: Call telegram_notifier.send_trade_notification() when trades are executed or closed
+        # Example placeholder calls:
+        # if trade_opened:
+        #     telegram_notifier.send_trade_notification({"action": "Opened", "symbol": TRADING_PAIR, "price": open_price, "notes": "Trade opened based on signal"})
+        # if trade_closed:
+        #     telegram_notifier.send_trade_notification({"action": "Closed", "symbol": TRADING_PAIR, "price": close_price, "profit": profit, "notes": "Trade closed"})
 
 
         await asyncio.sleep(SIGNAL_REFRESH_INTERVAL_SECONDS)
