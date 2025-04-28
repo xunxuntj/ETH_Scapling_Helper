@@ -57,27 +57,31 @@ async def run_trading_logic():
         # 2. Calculate indicators
         df = vegas_tunnel.calculate_emas(df)
         df = macd_rsi_logic.calculate_indicators(df)
-        # Integrate FibSupport and AtrTrailing calculations if needed for scoring or other logic here
+        # Integrate FibSupport and AtrTrailing calculations
         df = atr_trailing.calculate_atr(df, ATR_PERIOD)
         current_atr_value = df['ATR_14'].iloc[-1] if 'ATR_14' in df.columns else 0.0 # Get the latest ATR value
 
+        # Calculate FibSupport and CandlePatterns
+        fib_levels = fib_support.find_levels(df)
+        current_price = df['close'].iloc[-1]
+        fib_levels_near = fib_support.check_price_near_level(current_price, fib_levels)
+        candle_patterns_detected = candle_patterns.identify_patterns(df)
+
         # TODO: Pass large timeframe trend to scoring system
+        large_timeframe_trend = "sideways" # Placeholder
 
         # 3. Calculate signal score
         # Extract necessary data from df for scoring
         current_trend_status = vegas_tunnel.identify_trend(df)
         current_macd_rsi_signals = macd_rsi_logic.check_signals(df)
-        # TODO: Get fib_levels_near and candle_patterns from respective modules
-        fib_levels_near = [] # Placeholder
-        candle_patterns_detected = {} # Placeholder
-        large_timeframe_trend = "sideways" # Placeholder
 
         signal_score = scoring_system.calculate_score(
             current_trend_status,
             current_macd_rsi_signals,
             fib_levels_near,
             candle_patterns_detected,
-            large_timeframe_trend
+            large_timeframe_trend,
+            current_atr_value # Pass ATR value
         )
 
         # 4. Generate and log signals
@@ -97,28 +101,43 @@ async def run_trading_logic():
             # TODO: Map other signal details to model fields
             signal_type=signal_details['signal_type']
         )
-        # TODO: Add session and commit to database
+        
+        # Add session and commit to database
+        db_session = next(db.get_db()) # Get a database session
+        try:
+            db_session.add(db_signal)
+            db_session.commit()
+            db_session.refresh(db_signal) # Refresh to get the assigned ID
+            print(f"Signal logged to database with ID: {db_signal.id}")
+        except Exception as e:
+            db_session.rollback()
+            print(f"Error logging signal to database: {e}")
+        finally:
+            db_session.close()
 
         print(f"Generated Signal: {signal_details}")
 
         # 5. Check for open positions
         # TODO: Implement get_open_positions in GateioClient (needs order API keys)
-        open_positions = [] # Placeholder for fetched open positions
+        open_positions = gateio_client.get_open_positions(TRADING_PAIR) # Placeholder call
 
         # 6. Calculate and adjust trailing stop loss/take profit
         if open_positions:
             print(f"Checking {len(open_positions)} open positions for adjustments...")
             for position in open_positions:
                 # TODO: Extract necessary data from position object (open_price, current_stop_loss, current_take_profit, etc.)
+                # Assuming position is a dict-like object with relevant keys
                 trade_data = {
-                    'open_price': 0.0, # Placeholder
-                    'current_stop_loss': None, # Placeholder
-                    'current_take_profit': None, # Placeholder
+                    'open_price': float(position.get('entry_price', 0.0)), # Placeholder key
+                    'current_stop_loss': float(position.get('stop_loss', None)) if position.get('stop_loss') is not None else None, # Placeholder key
+                    'current_take_profit': float(position.get('take_profit', None)) if position.get('take_profit') is not None else None, # Placeholder key
                     'initial_stop_loss': INITIAL_STOP_LOSS_USD, # Assuming initial values are stored or accessible
-                    'initial_take_profit': INITIAL_TAKE_PROFIT_USD # Assuming initial values are stored or accessible
+                    'initial_take_profit': INITIAL_TAKE_PROFIT_USD, # Assuming initial values are stored or accessible
+                    'position_direction': position.get('side') # Assuming 'side' indicates 'long' or 'short'
                 }
                 current_price = df['close'].iloc[-1] # Use the latest close price
-                # TODO: Get ATR value for the current timeframe
+                # TODO: Get ATR value for the current timeframe (maybe from the calculated df)
+                current_atr_for_trailing = df['ATR_14'].iloc[-1] if 'ATR_14' in df.columns else 0.0 # Using the calculated ATR
 
                 needs_adjustment, new_stop_loss, new_take_profit = trailing_manager.check_for_adjustment(
                     trade_data,
@@ -128,16 +147,26 @@ async def run_trading_logic():
 
                 if needs_adjustment:
                     print(f"Adjustment needed for position: {position}. New SL: {new_stop_loss}, New TP: {new_take_profit}")
-                    # TODO: Implement logic to update stop loss/take profit on GateIO (needs order API keys)
-                    # TODO: Log the adjustment to the database
+                    # Implement logic to update stop loss/take profit on GateIO (placeholder)
+                    # TODO: Implement amend_order in GateioClient (needs order API keys)
+                    # Assuming position object contains order ID or similar identifier
+                    # gateio_client.amend_order(position.get('order_id'), new_stop_loss, new_take_profit) # Placeholder call
+
+                    # Log the adjustment to the database (placeholder)
+                    # TODO: Log the stop loss/take profit adjustment in the database (e.g., in the Trade table or a separate adjustments table)
+
 
         # 7. Log trades and capital snapshots
-        # TODO: Implement logic to log trade executions and closures when they occur
-        # TODO: Implement logic to periodically log capital snapshots
+        # Implement logic to log trade executions and closures when they occur (placeholder)
+        # TODO: Integrate actual trade execution/closure logging when order management is implemented
+
+        # Implement logic to periodically log capital snapshots (placeholder)
+        # TODO: Fetch actual capital from GateIO and log to database periodically
+        # Example: Log capital snapshot every hour or day
 
         # 8. Send notifications
         # Use TelegramNotifier to send signal and trade notifications
-        # TODO: Implement logic to trigger notifications based on signal generation and trade events
+        # Implement logic to trigger notifications based on signal generation and trade events (placeholder)
         # Example: Send signal notification if a strong signal is generated
         if signal_score >= SIGNAL_SCORE_STRONG:
              telegram_notifier.send_signal_notification(signal_details)

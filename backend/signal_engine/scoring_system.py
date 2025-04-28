@@ -51,7 +51,12 @@ class ScoringSystem:
            (trend_status == "downtrend" and macd_rsi_signals.get('rsi_oversold')):
             score -= 0.5 # Example deduction
 
-        # TODO: Add deduction based on high ATR (requires ATR value as input)
+        # Add deduction based on high ATR (requires ATR value as input)
+        # TODO: Define a proper threshold for high ATR (e.g., relative to average price or historical ATR)
+        high_atr_threshold = 5.0 # Example threshold
+
+        if atr_value > high_atr_threshold:
+            score -= 1.0 # Example deduction for high volatility
 
         # Ensure score is within 0-10 range
         score = max(0, min(10, score))

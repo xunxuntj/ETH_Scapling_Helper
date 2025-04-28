@@ -4,21 +4,33 @@ class TrailingManager:
         self.initial_take_profit_usd = initial_take_profit_usd
         self.trailing_trigger_usd = trailing_trigger_usd
 
-    def calculate_current_levels(self, open_price: float, current_price: float, atr_value: float):
+    def calculate_current_levels(self, open_price: float, current_price: float, atr_value: float, position_direction: str):
         """Calculates current dynamic stop loss and take profit levels."""
-        profit_usd = (current_price - open_price) # Simplified for now, needs to consider position size and direction
+        # TODO: Consider position size for accurate profit/loss calculation
 
-        current_stop_loss = open_price - self.initial_stop_loss_usd # Start with initial stop loss
-        current_take_profit = open_price + self.initial_take_profit_usd # Start with initial take profit
+        if position_direction == "long":
+            profit_usd = current_price - open_price
+            current_stop_loss = open_price - self.initial_stop_loss_usd # Start with initial stop loss
+            current_take_profit = open_price + self.initial_take_profit_usd # Start with initial take profit
 
-        if profit_usd >= self.trailing_trigger_usd:
-            # Move stop loss to breakeven
-            current_stop_loss = open_price
-            # Trail take profit (simplified, needs to use ATR for step)
-            current_take_profit = current_price + self.trailing_trigger_usd # Placeholder, needs ATR logic
+            if profit_usd >= self.trailing_trigger_usd:
+                # Move stop loss to breakeven
+                current_stop_loss = open_price
+                # Trail take profit based on ATR
+                current_take_profit = current_price + atr_value * (self.initial_take_profit_usd / self.trailing_trigger_usd) # Example: Scale take profit step by ATR relative to trigger
 
-        # TODO: Implement ATR-based trailing step for take profit
-        # TODO: Consider position direction (long/short) for calculations
+        elif position_direction == "short":
+            profit_usd = open_price - current_price
+            current_stop_loss = open_price + self.initial_stop_loss_usd # Start with initial stop loss
+            current_take_profit = open_price - self.initial_take_profit_usd # Start with initial take profit
+
+            if profit_usd >= self.trailing_trigger_usd:
+                # Move stop loss to breakeven
+                current_stop_loss = open_price
+                # Trail take profit based on ATR
+                current_take_profit = current_price - atr_value * (self.initial_take_profit_usd / self.trailing_trigger_usd) # Example: Scale take profit step by ATR relative to trigger
+        else:
+            return None, None # Should not happen
 
         return current_stop_loss, current_take_profit
 
@@ -27,6 +39,7 @@ class TrailingManager:
         open_price = trade_data['open_price']
         initial_stop_loss = trade_data['initial_stop_loss']
         initial_take_profit = trade_data['initial_take_profit']
+        position_direction = trade_data.get('position_direction') # Get position direction from trade data
 
         # Implement logic to compare current price with stop loss/take profit and determine if adjustment is needed
         # This will involve calling calculate_current_levels and comparing with existing levels
@@ -35,20 +48,21 @@ class TrailingManager:
         new_stop_loss = trade_data.get('current_stop_loss')
         new_take_profit = trade_data.get('current_take_profit')
 
-        calculated_stop_loss, calculated_take_profit = self.calculate_current_levels(
-            trade_data['open_price'],
-            current_price,
-            atr_value # Pass ATR value
-            # TODO: Pass position direction
-        )
+        if position_direction: # Only proceed if position direction is available
+            calculated_stop_loss, calculated_take_profit = self.calculate_current_levels(
+                trade_data['open_price'],
+                current_price,
+                atr_value, # Pass ATR value
+                position_direction # Pass position direction
+            )
 
-        # Check if calculated levels are different from current levels
-        if calculated_stop_loss is not None and calculated_stop_loss != new_stop_loss:
-            needs_adjustment = True
-            new_stop_loss = calculated_stop_loss
+            # Check if calculated levels are different from current levels
+            if calculated_stop_loss is not None and calculated_stop_loss != new_stop_loss:
+                needs_adjustment = True
+                new_stop_loss = calculated_stop_loss
 
-        if calculated_take_profit is not None and calculated_take_profit != new_take_profit:
-            needs_adjustment = True
-            new_take_profit = calculated_take_profit
+            if calculated_take_profit is not None and calculated_take_profit != new_take_profit:
+                needs_adjustment = True
+                new_take_profit = calculated_take_profit
 
         return needs_adjustment, new_stop_loss, new_take_profit
