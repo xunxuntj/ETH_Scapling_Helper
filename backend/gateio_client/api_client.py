@@ -43,11 +43,9 @@ class GateioClient:
             return 0.0
 
     def get_open_positions(self, currency_pair: str):
-        """Fetches open positions for a given currency pair."""
+        """Fetches open positions for a given currency pair, passing the contract."""
         try:
-            # Assuming Gate.io futures API has a method to list positions
-            # Need to confirm the exact method and parameters from SDK docs
-            positions = self.futures_api.list_futures_positions(contract=currency_pair, currency_pair=currency_pair) # Placeholder method and parameter
+            positions = self.futures_api.list_futures_positions(contract=currency_pair)
         except Exception as e:
             print(f"Error fetching open positions: {e}")
             return None
@@ -56,12 +54,14 @@ class GateioClient:
     def amend_order(self, contract: str, order_id: str, new_stop_loss: float = None, new_take_profit: float = None):
         """Amends an existing order to update stop loss and/or take profit."""
         order_configuration = gate_api.Configuration(
-            key=self.order_api_key,
-            secret=self.order_secret_key
+            key=self.api_key,
+            secret=self.secret_key
         )
         order_api_client = gate_api.ApiClient(order_configuration)
         futures_api = gate_api.FuturesApi(order_api_client)
-        
+
+        new_stop_loss = str(new_stop_loss) if new_stop_loss is not None else None
+        new_take_profit = str(new_take_profit) if new_take_profit is not None else None
         update_params = {}
         if new_stop_loss is not None:
             update_params["text"] = f"stop_loss:{new_stop_loss}"
@@ -72,8 +72,8 @@ class GateioClient:
             return None
         
         try:
-            # Assuming Gate.io spot API has an amend_order method
-            amended_order = futures_api.update_futures_order(order_id=order_id, contract=contract, text=update_params["text"])
+            # Use the correct method: amend_futures_order
+            amended_order = futures_api.amend_futures_order(order_id=order_id, contract=contract, **update_params)
             print(f"Order amended: {amended_order}")
             return amended_order
         except Exception as e:

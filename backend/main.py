@@ -33,10 +33,12 @@ scoring_system = ScoringSystem()
 trailing_manager = TrailingManager(INITIAL_STOP_LOSS_USD, INITIAL_TAKE_PROFIT_USD, TRAILING_TRIGGER_USD)
 # Handle potential None values for Telegram credentials
 telegram_bot_token = settings.TELEGRAM_BOT_TOKEN if settings.TELEGRAM_BOT_TOKEN else "" # TODO: Add proper error handling if None
-telegram_chat_id = settings.TELEGRAM_CHAT_ID if settings.TELEGRAM_CHAT_ID else "" # TODO: Add proper error handling if None
-if not telegram_bot_token or not telegram_chat_id:
-    print("Telegram bot token or chat ID not set. Telegram notifications will be disabled.")
-telegram_notifier = TelegramNotifier(telegram_bot_token, telegram_chat_id)
+telegram_chat_id = settings.TELEGRAM_CHAT_ID if settings.TELEGRAM_CHAT_ID else ""  # TODO: Add proper error handling if None
+if not telegram_bot_token or not telegram_chat_id:  
+    raise ValueError("Telegram bot token or chat ID not set. Please configure TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID in your settings.")
+
+telegram_notifier = TelegramNotifier(telegram_bot_token, telegram_chat_id)  
+
 
 async def run_trading_logic():
     """Scheduled task to run trading signal and management logic."""
@@ -48,6 +50,17 @@ async def run_trading_logic():
         if not klines_data:
             print("Failed to fetch k-line data. Skipping this cycle.")
             await asyncio.sleep(SIGNAL_REFRESH_INTERVAL_SECONDS)
+            continue
+            
+        # 1.1 Fetch large time frame k-line data
+        klines_data_large_tf = gateio_client.get_klines(TRADING_PAIR, "4h", 100)
+        if not klines_data_large_tf:
+            print("Failed to fetch large time frame k-line data. Skipping this cycle.")
+            await asyncio.sleep(SIGNAL_REFRESH_INTERVAL_SECONDS)
+            continue
+        
+        df_large_tf = pd.DataFrame(klines_data_large_tf, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
+        df_large_tf[['open', 'high', 'low', 'close', 'volume']] = df_large_tf[['open', 'high', 'low', 'close', 'volume']].astype(float)
             continue
 
         # Convert klines data to pandas DataFrame
@@ -69,8 +82,7 @@ async def run_trading_logic():
         fib_levels_near = fib_support.check_price_near_level(current_price, fib_levels)
         candle_patterns_detected = candle_patterns.identify_patterns(df)
 
-        # TODO: Pass large timeframe trend to scoring system
-        large_timeframe_trend = "sideways" # Placeholder
+        large_timeframe_trend = vegas_tunnel.calculate_large_timeframe_trend(df_large_tf)
         pass # Placeholder
 
         # 3. Calculate signal score
@@ -83,7 +95,7 @@ async def run_trading_logic():
             current_macd_rsi_signals,
             fib_levels_near,
             candle_patterns_detected,
-            large_timeframe_trend,
+            large_timeframe_trend, #type: ignore
             current_atr_value # Pass ATR value
         )
 
@@ -112,7 +124,6 @@ async def run_trading_logic():
             signal_type=signal_details['signal_type'],
         )  
         pass # Placeholder
-        
         # Add session and commit to database
         db_session = next(db.get_db()) # Get a database session
         try:
@@ -143,53 +154,48 @@ async def run_trading_logic():
                 # TODO: Extract necessary data from position object (open_price, current_stop_loss, current_take_profit, etc.)
                 # Assuming position is a dict-like object with relevant keys
                 position_size = float(position.get('size', 1.0)) # Get position size, default to 1.0
+                is_long = position.get('side') == 'long'
                 trade_data = {
-                    'open_price': float(position.get('entry_price', 0.0)), # Placeholder key
-                    'current_stop_loss': float(position.get('stop_loss', None)) if position.get('stop_loss') is not None else None, # Placeholder key
-                    'current_take_profit': float(position.get('take_profit', None)) if position.get('take_profit') is not None else None, # Placeholder key
+                    'open_price': float(position.get('entry_price', 0.0)),
+                    'current_stop_loss': float(position.get('liq_price', None)) if not is_long else None,
+                    'current_take_profit': None if is_long else float(position.get('liq_price', None)),
                     'initial_stop_loss': INITIAL_STOP_LOSS_USD, # Assuming initial values are stored or accessible
                     'initial_take_profit': INITIAL_TAKE_PROFIT_USD, # Assuming initial values are stored or accessible
-                    'position_direction': position.get('side') # Assuming 'side' indicates 'long' or 'short'
+                    'position_direction': position.get('side')
                 }
                 current_price = df['close'].iloc[-1] # Use the latest close price
-                # TODO: Get ATR value for the current timeframe (maybe from the calculated df)
                 current_atr_for_trailing = df['ATR_14'].iloc[-1] if 'ATR_14' in df.columns else 0.0 # Using the calculated ATR
-                # Placeholder for ATR value
 
                 needs_adjustment, new_stop_loss, new_take_profit = trailing_manager.check_for_adjustment(
                     trade_data,
                     current_price,
-                    0.0, # Placeholder for ATR value
+                    current_atr_for_trailing,
                     position_size
                 )
 
                 if needs_adjustment:
                     print(f"Adjustment needed for position: {position}. New SL: {new_stop_loss}, New TP: {new_take_profit}")
-                    # Implement logic to update stop loss/take profit on GateIO (placeholder)
-                    # TODO: Implement amend_order in GateioClient (needs order API keys)
-                    # Assuming position object contains order ID or similar identifier
-                    # gateio_client.amend_order(position.get('order_id'), new_stop_loss, new_take_profit) # Placeholder call
-
-                    # Log the adjustment to the database (placeholder)
+                    gateio_client.amend_order(TRADING_PAIR, position.get('id'), new_stop_loss, new_take_profit)
+                # Log the adjustment to the database (placeholder)
                     # TODO: Log the stop loss/take profit adjustment in the database (e.g., in the Trade table or a separate adjustments table)
-                    pass # Placeholder for logging stop loss/take profit adjustment
-
 
         # 7. Log trades and capital snapshots
         # Implement logic to log trade executions and closures when they occur (placeholder)
         # TODO: Integrate actual trade execution/closure logging when order management is implemented
         # Example placeholder:
-        trade_executed = False # Placeholder
+        trade_executed = False
+        trade_closed = False
         if trade_executed:
-            db_trade = models.Trade(
-                open_price=0.0, # Placeholder
-                close_price=0.0, # Placeholder
-                profit=0.0, # Placeholder
-                signal_id=db_signal.id # Placeholder
+            db_trade = models.Trade(  # type: ignore
+                open_price=current_price,
+                close_price=current_price,
+                profit=0.0,
+                signal_id=db_signal.id
             ) # Create Trade object
             db_session = next(db.get_db())
             try:
                 db_session.add(db_trade)
+                telegram_notifier.send_trade_notification({"action": "Opened", "symbol": TRADING_PAIR, "price": current_price, "notes": "Trade opened based on signal"})
                 db_session.commit()
                 db_session.refresh(db_trade)
             finally:
@@ -197,28 +203,29 @@ async def run_trading_logic():
             pass # Placeholder
             pass # Placeholder
 
-
-        # Implement logic to periodically log capital snapshots (placeholder)
-        # TODO: Fetch actual capital from GateIO and log to database periodically
-        # Example: Log capital snapshot every hour or day
-        # Example placeholder:
-        time_to_log_capital_snapshot = True # Placeholder
-        if time_to_log_capital_snapshot: # Implement this check
+        if trade_closed:
             try:
-                current_capital = gateio_client.get_account_balance("USDT") # Fetch capital
-                if current_capital is not None:
-                    db_capital_snapshot = models.CapitalSnapshot(total_capital=current_capital, funding_phase_id=None) # TODO: Determine funding phase ID
-                    db_session = next(db.get_db())
-                    try:
-                        db_session.add(db_capital_snapshot)
-                        db_session.commit()
-                        db_session.refresh(db_capital_snapshot)
-                    finally:
-                        db_session.close()
+                telegram_notifier.send_trade_notification({"action": "Closed", "symbol": TRADING_PAIR, "price": current_price, "profit": 0.0, "notes": "Trade closed"})
             except Exception as e:
-                print(f"Error fetching capital from GateIO: {e}")
-            pass # Placeholder
-            pass # Placeholder
+                print(f"Error sending trade notification: {e}")
+        
+
+
+
+
+        try:
+            current_capital = gateio_client.get_account_balance("USDT") # Fetch capital
+            if current_capital is not None:
+                db_capital_snapshot = models.CapitalSnapshot(total_capital=current_capital, funding_phase_id=None) # TODO: Determine funding phase ID
+                db_session = next(db.get_db())
+                try:
+                    db_session.add(db_capital_snapshot)
+                    db_session.commit()
+                    db_session.refresh(db_capital_snapshot)
+                finally:
+                    db_session.close()
+        except Exception as e:
+            print(f"Error fetching capital from GateIO: {e}")
 
 
         # 8. Send notifications
@@ -230,22 +237,6 @@ async def run_trading_logic():
                 telegram_notifier.send_signal_notification(signal_details)
             except Exception as e:
                 print(f"Error sending signal notification: {e}")
-        # Example: Send trade notification when a trade is opened or closed
-        # TODO: Call telegram_notifier.send_trade_notification() when trades are executed or closed
-        # Example placeholder calls:
-        trade_opened = False # Placeholder
-        trade_closed = False # Placeholder
-        if trade_opened:
-            try:
-                telegram_notifier.send_trade_notification({"action": "Opened", "symbol": TRADING_PAIR, "price": 0.0, "notes": "Trade opened based on signal"}) # Placeholder
-            except Exception as e:
-                print(f"Error sending trade notification: {e}")
-        if trade_closed:
-            try:
-                telegram_notifier.send_trade_notification({"action": "Closed", "symbol": TRADING_PAIR, "price": 0.0, "profit": 0.0, "notes": "Trade closed"}) # Placeholder
-            except Exception as e:
-                print(f"Error sending trade notification: {e}")
-        pass # Placeholder
         pass # Placeholder
 
 

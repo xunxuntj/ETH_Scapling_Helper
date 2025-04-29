@@ -12,6 +12,14 @@ class VegasTunnel:
         data[f'EMA_{self.ema_medium}'] = data['close'].ewm(span=self.ema_medium, adjust=False).mean()
         data[f'EMA_{self.ema_long}'] = data['close'].ewm(span=self.ema_long, adjust=False).mean()
         return data
+    
+    def calculate_large_timeframe_trend(self, data: pd.DataFrame):
+        """Calculates the trend based on Vegas Tunnel in a large timeframe."""
+        # Use the same logic as identify_trend
+        data = self.calculate_emas(data) # First calculate EMAs
+        return self.identify_trend(data)
+        
+
 
     def identify_trend(self, data: pd.DataFrame):
         """Identifies the trend based on Vegas Tunnel."""
