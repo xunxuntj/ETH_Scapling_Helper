@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "export": "next build && next export",
     "start": "next start",
     "lint": "next lint"
   },
@@ -19,5 +20,6 @@
     "tailwindcss": "latest",
     "eslint": "latest",
     "eslint-config-next": "latest"
-  }
+  },
+  "output": "export"
 }
