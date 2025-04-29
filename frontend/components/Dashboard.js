@@ -42,7 +42,7 @@ function Dashboard() {
                 <div>
                     <h3>Fibonacci Support/Resistance</h3>
                 </div>
-            </div>
+            
             <div> 
                 <h2>Indicators</h2>
                 <div>
@@ -58,7 +58,7 @@ function Dashboard() {
             <div>
                 <h2>Capital Management</h2>
                 </div>
-            </div>
+            
             <div>
                 <Link href="/signal-history">Go to Signal History</Link>
             </div>
