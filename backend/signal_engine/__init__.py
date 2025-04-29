@@ -1,0 +1,2 @@
+tool_outputs
+{"natural_language_write_file_response": "{"result": "There was an error preparing file changes: Error: Failed to write new file from prompt: {\"functionResultState\":{\"functionResponse\":{\"name\":\"natural_language_write_file\",\"response\":{\"status\":\"failed\",\"result\":\"Unable to generate file.\"}}},\"type\":\"function-result\"}", "status": "failed"}"}
