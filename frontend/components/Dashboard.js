@@ -10,8 +10,20 @@ function Dashboard() {
             <div>
                 <h2>Current Holding</h2>
             </div>
-            <div>
+            <div >
                 <h2>Signals</h2>
+                <div>
+                  <h3>MACD</h3>
+                </div>
+                <div>
+                  <h3>RSI</h3>
+                </div>
+                <div>
+                  <h3>Vegas Tunnel</h3>
+                </div>
+                <div>
+                  <h3>EMA Double Cross</h3>
+                </div>
             </div>
             <div>
                 <h2>Indicators</h2>
