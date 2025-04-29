@@ -1,14 +1,34 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 
 function Dashboard() {
+    const [latestPrice, setLatestPrice] = useState("Loading...");
+
+    const fetchLatestPrice = async () => {
+        try {
+            const response = await fetch('/api/latest-price');
+            const data = await response.json();
+            setLatestPrice(data.price);
+        } catch (error) {
+            console.error("Error fetching latest price:", error);
+            setLatestPrice("Error loading price");
+        }
+    };
+
+    useEffect(() => {
+        fetchLatestPrice();
+    }, []);
+
     return (
         <div>
             <h1>Trading Dashboard</h1>
-            <div> 
+            <div>
                 <h2>Latest Price</h2>
                 <div>
                     <h3>ETH Price</h3>
+                    <div>
+                        {latestPrice}
+                    </div>
                 </div>
             </div>
             <div>
@@ -21,7 +41,7 @@ function Dashboard() {
                 </div>
                 <div><h3>Entry Price</h3></div>
                 <div><h3>Unrealized PnL</h3></div>
-            </div>
+            </div>            
             <div >
                 <h2>Signals</h2>
                 <div>
@@ -42,7 +62,7 @@ function Dashboard() {
                 <div>
                     <h3>Fibonacci Support/Resistance</h3>
                 </div>
-            
+            </div>            
             <div> 
                 <h2>Indicators</h2>
                 <div>
@@ -58,7 +78,7 @@ function Dashboard() {
             <div>
                 <h2>Capital Management</h2>
                 </div>
-            
+            </div>            
             <div>
                 <Link href="/signal-history">Go to Signal History</Link>
             </div>
