@@ -3,11 +3,13 @@ class ScoringSystem:
         """Calculates a signal score based on various factors."""
         score = 0
 
-        # Trend direction confirmation
-        if trend_status == "uptrend":
-            score += 2
-        elif trend_status == "downtrend":
-            score += 2
+        # Trend direction confirmation with strength
+        if isinstance(trend_status, tuple):  # New format returns (trend, strength)
+            trend, strength = trend_status
+            if trend == "uptrend":
+                score += 2 * (1 + strength)  # Scale score by trend strength
+            elif trend == "downtrend":
+                score += 2 * (1 + strength)
 
         # Short-term momentum (MACD)
         if macd_rsi_signals.get('macd_golden_cross'):
