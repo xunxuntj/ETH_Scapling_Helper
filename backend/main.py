@@ -125,7 +125,11 @@ async def run_trading_logic():
 
         # 5. Check for open positions
         # TODO: Implement get_open_positions in GateioClient (needs order API keys)
-        open_positions = gateio_client.get_open_positions(TRADING_PAIR) # Placeholder call
+        try:
+            open_positions = gateio_client.get_open_positions(TRADING_PAIR) # Placeholder call
+        except Exception as e:
+            print(f"Error fetching open positions: {e}")
+            open_positions = None
 
         # 6. Calculate and adjust trailing stop loss/take profit
         if open_positions:
@@ -133,6 +137,7 @@ async def run_trading_logic():
             for position in open_positions:
                 # TODO: Extract necessary data from position object (open_price, current_stop_loss, current_take_profit, etc.)
                 # Assuming position is a dict-like object with relevant keys
+                position_size = float(position.get('size', 1.0)) # Get position size, default to 1.0
                 trade_data = {
                     'open_price': float(position.get('entry_price', 0.0)), # Placeholder key
                     'current_stop_loss': float(position.get('stop_loss', None)) if position.get('stop_loss') is not None else None, # Placeholder key
@@ -149,7 +154,8 @@ async def run_trading_logic():
                 needs_adjustment, new_stop_loss, new_take_profit = trailing_manager.check_for_adjustment(
                     trade_data,
                     current_price,
-                    0.0 # Placeholder for ATR value
+                    0.0, # Placeholder for ATR value
+                    position_size
                 )
 
                 if needs_adjustment:
@@ -184,6 +190,7 @@ async def run_trading_logic():
             finally:
                 db_session.close()
             pass # Placeholder
+            pass # Placeholder
 
 
         # Implement logic to periodically log capital snapshots (placeholder)
@@ -192,16 +199,20 @@ async def run_trading_logic():
         # Example placeholder:
         time_to_log_capital_snapshot = True # Placeholder
         if time_to_log_capital_snapshot: # Implement this check
-            current_capital = gateio_client.get_account_balance("USDT") # Fetch capital
-            if current_capital is not None:
-                db_capital_snapshot = models.CapitalSnapshot(total_capital=current_capital, funding_phase_id=None) # TODO: Determine funding phase ID
-                db_session = next(db.get_db())
-                try:
-                    db_session.add(db_capital_snapshot)
-                    db_session.commit()
-                    db_session.refresh(db_capital_snapshot)
-                finally:
-                    db_session.close()
+            try:
+                current_capital = gateio_client.get_account_balance("USDT") # Fetch capital
+                if current_capital is not None:
+                    db_capital_snapshot = models.CapitalSnapshot(total_capital=current_capital, funding_phase_id=None) # TODO: Determine funding phase ID
+                    db_session = next(db.get_db())
+                    try:
+                        db_session.add(db_capital_snapshot)
+                        db_session.commit()
+                        db_session.refresh(db_capital_snapshot)
+                    finally:
+                        db_session.close()
+            except Exception as e:
+                print(f"Error fetching capital from GateIO: {e}")
+            pass # Placeholder
             pass # Placeholder
 
 
@@ -210,16 +221,26 @@ async def run_trading_logic():
         # Implement logic to trigger notifications based on signal generation and trade events (placeholder)
         # Example: Send signal notification if a strong signal is generated
         if signal_score >= SIGNAL_SCORE_STRONG:
-             telegram_notifier.send_signal_notification(signal_details)
+            try:
+                telegram_notifier.send_signal_notification(signal_details)
+            except Exception as e:
+                print(f"Error sending signal notification: {e}")
         # Example: Send trade notification when a trade is opened or closed
         # TODO: Call telegram_notifier.send_trade_notification() when trades are executed or closed
         # Example placeholder calls:
         trade_opened = False # Placeholder
         trade_closed = False # Placeholder
         if trade_opened:
-            telegram_notifier.send_trade_notification({"action": "Opened", "symbol": TRADING_PAIR, "price": 0.0, "notes": "Trade opened based on signal"}) # Placeholder
+            try:
+                telegram_notifier.send_trade_notification({"action": "Opened", "symbol": TRADING_PAIR, "price": 0.0, "notes": "Trade opened based on signal"}) # Placeholder
+            except Exception as e:
+                print(f"Error sending trade notification: {e}")
         if trade_closed:
-            telegram_notifier.send_trade_notification({"action": "Closed", "symbol": TRADING_PAIR, "price": 0.0, "profit": 0.0, "notes": "Trade closed"}) # Placeholder
+            try:
+                telegram_notifier.send_trade_notification({"action": "Closed", "symbol": TRADING_PAIR, "price": 0.0, "profit": 0.0, "notes": "Trade closed"}) # Placeholder
+            except Exception as e:
+                print(f"Error sending trade notification: {e}")
+        pass # Placeholder
         pass # Placeholder
 
 
@@ -237,4 +258,15 @@ def read_root():
 @app.get("/signals")
 def get_signals():
     # TODO: Implement logic to fetch signals from the database
-    return {"message": "Latest trading signals"}
+    # Placeholder
+    db_session = next(db.get_db())
+    try:
+        signals = db_session.query(models.Signal).order_by(models.Signal.id.desc()).limit(10).all()
+        signal_list = [{"score": signal.score, "details": signal.details, "trend_direction": signal.trend_direction, "signal_type": signal.signal_type} for signal in signals]
+        return signal_list
+    except Exception as e:
+        print(f"Error fetching signals from database: {e}")
+        return {"message": "Error fetching signals"}
+    finally:
+        db_session.close()
+    pass # Placeholder

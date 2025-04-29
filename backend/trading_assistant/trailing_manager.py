@@ -5,12 +5,13 @@ class TrailingManager:
         self.trailing_trigger_usd = trailing_trigger_usd
         self.strategy_rules = {} # Placeholder for specific strategy rules
 
-    def calculate_current_levels(self, open_price: float, current_price: float, atr_value: float, position_direction: str):
+    def calculate_current_levels(self, open_price: float, current_price: float, atr_value: float, position_direction: str, position_size: float = 1.0):
         """Calculates current dynamic stop loss and take profit levels."""
         # TODO: Consider position size for accurate profit/loss calculation
+        profit_loss_multiplier = position_size # Placeholder
 
         if position_direction == "long":
-            profit_usd = current_price - open_price
+            profit_usd = (current_price - open_price) * position_size
             current_stop_loss = open_price - self.initial_stop_loss_usd # Start with initial stop loss
             current_take_profit = open_price + self.initial_take_profit_usd # Start with initial take profit
 
@@ -21,7 +22,7 @@ class TrailingManager:
                 current_take_profit = current_price + atr_value * (self.initial_take_profit_usd / self.trailing_trigger_usd) # Example: Scale take profit step by ATR relative to trigger
 
         elif position_direction == "short":
-            profit_usd = open_price - current_price
+            profit_usd = (open_price - current_price) * position_size
             current_stop_loss = open_price + self.initial_stop_loss_usd # Start with initial stop loss
             current_take_profit = open_price - self.initial_take_profit_usd # Start with initial take profit
 
@@ -54,7 +55,8 @@ class TrailingManager:
                 trade_data['open_price'],
                 current_price,
                 atr_value, # Pass ATR value
-                position_direction # Pass position direction
+                position_direction, # Pass position direction
+                1.0 # Pass position size
             )
 
             # Check if calculated levels are different from current levels
