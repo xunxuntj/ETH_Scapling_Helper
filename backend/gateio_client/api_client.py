@@ -21,36 +21,23 @@ class GateioClient:
 
     def get_klines(self, currency_pair: str, interval: str = "1m", limit: int = 100):
         """Fetches k-line data for a given currency pair and interval."""
+        # Use the correct futures API method
         try:
-            # Gate.io futures klines endpoint might be different, need to confirm with SDK docs
-            try:
-                klines = self.futures_api.list_futures_candlesticks(contract=currency_pair, interval=interval, limit=limit)
-            except:
-                # This is a placeholder using spot klines for now
-                klines = self.spot_api.list_candlesticks(currency_pair, interval=interval, limit=limit)
-            # TODO: Adapt for futures klines if necessary
-            return klines
+            klines = self.futures_api.list_futures_candlesticks(contract=currency_pair, interval=interval, limit=limit)
+            return klines # Return the result directly
         except Exception as e:
-            print(f"Error fetching klines: {e}")
-            return None
+            raise Exception(f"Error fetching klines: {e}") # Raise an exception
+
 
     def get_account_balance(self, currency: str = "USDT"):
         """Fetches the account balance for a given currency."""
+        # Use the correct futures API method
         try:
-            # Gate.io futures account balance endpoint might be different
-            try:
-                accounts = self.futures_api.list_futures_accounts()
-                for account in accounts:
-                    if account.currency == currency:
-                        return float(account.available) # Assuming 'available' is the relevant balance
-            except:
-                # This is a placeholder using spot account for now
-                accounts = self.spot_api.list_spot_accounts()
-                for account in accounts:
-                    if account.currency == currency:
-                        return float(account.available) # Assuming 'available' is the relevant balance
-            # TODO: Adapt for futures account balance if necessary
-            return 0.0
+            accounts = self.futures_api.list_futures_accounts()
+            for account in accounts:
+                if account.currency == currency:
+                    return float(account.available)  # Assuming 'available' is the relevant balance
+            raise Exception(f"Currency {currency} not found in futures accounts")
         except Exception as e:
             print(f"Error fetching account balance: {e}")
             return 0.0
@@ -66,51 +53,48 @@ class GateioClient:
             return None
         return positions
 
-    def amend_order(self, order_id: str, new_stop_loss: float = None, new_take_profit: float = None):
+    def amend_order(self, contract: str, order_id: str, new_stop_loss: float = None, new_take_profit: float = None):
         """Amends an existing order to update stop loss and/or take profit."""
-        # TODO: Adapt for futures orders if necessary
-        # Need to use the order API keys for trading operations
         order_configuration = gate_api.Configuration(
             key=self.order_api_key,
             secret=self.order_secret_key
         )
         order_api_client = gate_api.ApiClient(order_configuration)
         futures_api = gate_api.FuturesApi(order_api_client)
-
-        # TODO: Construct the amend order parameters based on GateIO API requirements
-        amend_params = {}
+        
+        update_params = {}
         if new_stop_loss is not None:
-            amend_params['stop_loss'] = str(new_stop_loss)
+            update_params["text"] = f"stop_loss:{new_stop_loss}"
         if new_take_profit is not None:
-            amend_params['take_profit'] = str(new_take_profit)
+            update_params["text"] = f"take_profit:{new_take_profit}"
 
+        if len(update_params) == 0:
+            return None
+        
         try:
             # Assuming Gate.io spot API has an amend_order method
-            # Need to confirm the exact method and parameters from SDK docs
-            amended_order = futures_api.amend_futures_order(order_id, amend_params) # Placeholder method
+            amended_order = futures_api.update_futures_order(order_id=order_id, contract=contract, text=update_params["text"])
             print(f"Order amended: {amended_order}")
             return amended_order
         except Exception as e:
             print(f"Error amending order: {e}")
             return None
-
+        
     def place_order(self, currency_pair: str, side: str, amount: float, price: float = None):
-        """Places a spot order."""
-        # TODO: Adapt for futures orders if necessary
-        # Need to use the order API keys for trading operations
+        """Places a futures order."""
         order_configuration = gate_api.Configuration(
             key=self.order_api_key,
             secret=self.order_secret_key
         )
         order_api_client = gate_api.ApiClient(order_configuration)
         futures_api = gate_api.FuturesApi(order_api_client)
-
+        
         order = gate_api.FuturesOrder(
             contract=currency_pair,
-            side=side, # "buy" or "sell"
+            side=side,
             size=amount,
-            price=price if price is not None else "", # Pass empty string instead of None for price
-            # TODO: Add other necessary order parameters (e.g., time_in_force, order_type)
+            price=price if price is not None else None,
+            tif="ioc"
         )
 
         try:
@@ -124,25 +108,17 @@ class GateioClient:
             return None
 
     def cancel_order(self, currency_pair: str, order_id: str):
-        """Cancels a spot order."""
-        # TODO: Adapt for futures orders if necessary
-        # Need to use the order API keys for trading operations
+        """Cancels a futures order."""
         order_configuration = gate_api.Configuration(
             key=self.order_api_key,
             secret=self.order_secret_key
         )
         order_api_client = gate_api.ApiClient(order_configuration)
         futures_api = gate_api.FuturesApi(order_api_client)
-
         try:
-            # Assuming Gate.io spot API has a cancel_order method
-            canceled_order = futures_api.cancel_futures_order(order_id, currency_pair) # Placeholder method
+            canceled_order = futures_api.cancel_futures_order(order_id=order_id, contract=currency_pair)
             print(f"Order canceled: {canceled_order}")
             return canceled_order
         except Exception as e:
             print(f"Error canceling order: {e}")
             return None
-
-    # TODO: Add methods for placing and canceling orders using order API keys
-    # The above methods are placeholders and need to be adapted for futures trading and confirmed with SDK docs.
-    pass # Placeholder

@@ -90,11 +90,16 @@ async def run_trading_logic():
         # 4. Generate and log signals
         signal_details = {
             "score": signal_score,
-            "details": scoring_system.interpret_score(signal_score),
+            "details": scoring_system.interpret_score(signal_score), # type: ignore
             "trend_direction": current_trend_status,
-            # TODO: Add other relevant signal details from indicators and patterns
+            "trend_status": current_trend_status,
+            "macd_status": current_macd_rsi_signals.get('macd_status'), # type: ignore
+            "rsi_status": current_macd_rsi_signals.get('rsi_status'), # type: ignore
+            "fib_levels_status": fib_levels_near,
+            "candle_patterns_status": candle_patterns_detected,
             "signal_type": "BUY" if signal_score >= SIGNAL_SCORE_STRONG and current_trend_status == "uptrend" else "SELL" if signal_score >= SIGNAL_SCORE_STRONG and current_trend_status == "downtrend" else "NEUTRAL" # Basic signal type
         }
+
         pass # Placeholder
 
         # Log signal to the database
@@ -102,10 +107,10 @@ async def run_trading_logic():
             score=signal_details['score'],
             details=signal_details['details'],
             trend_direction=signal_details['trend_direction'],
-            # TODO: Map other signal details to model fields
+            fib_levels_status=signal_details['fib_levels_status'],
+            candle_patterns_status=signal_details['candle_patterns_status'],
             signal_type=signal_details['signal_type'],
-            # Placeholder for other signal details
-        )
+        )  
         pass # Placeholder
         
         # Add session and commit to database

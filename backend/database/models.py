@@ -19,6 +19,8 @@ class Signal(Base):
     fib_level = Column(Float, nullable=True) # Assuming a single relevant level can be stored
     candle_pattern = Column(String, nullable=True)
     large_timeframe_trend = Column(String)
+    fib_levels_status = Column(String, nullable=True)
+    candle_patterns_status = Column(String, nullable=True)
     signal_type = Column(String) # "BUY" or "SELL"
 
     trades = relationship("Trade", back_populates="signal")
