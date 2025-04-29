@@ -82,6 +82,21 @@ function Dashboard() {
                 <h2>Capital Management</h2>
             </div>
             <div>
+                <h2>Position Cycle Control</h2>
+                <div>
+                  Time Since Last Change: Loading...
+                </div>
+                <div>
+                  Within 2-4 Hour Window: Unknown
+                </div>
+            </div>
+            <div>
+              <h2>Dynamic Take Profit/Stop Loss</h2>
+              <label htmlFor="dynamic-adjustment-switch">Enable Dynamic Adjustment</label>
+              <input type="checkbox" id="dynamic-adjustment-switch" />
+            </div>
+
+            <div>
               <Link href="/signal-history">Go to Signal History</Link>
             </div>
         </div>
