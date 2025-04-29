@@ -42,7 +42,7 @@ function Dashboard() {
                 <div><h3>Entry Price</h3></div>
                 <div><h3>Unrealized PnL</h3></div>
             </div>            
-            <div >
+            <div>
                 <h2>Signals</h2>
                 <div>
                   <h3>MACD</h3>
@@ -77,9 +77,8 @@ function Dashboard() {
             </div>
             <div>
                 <h2>Capital Management</h2>
-                </div>
-            </div>            
-            <div>
+            </div>
+            <div/>
                 <Link href="/signal-history">Go to Signal History</Link>
             </div>
         </div>
