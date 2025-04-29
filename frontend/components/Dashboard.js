@@ -1,4 +1,5 @@
 import React from 'react';
+import Link from 'next/link';
 
 function Dashboard() {
     return (
@@ -33,6 +34,9 @@ function Dashboard() {
                 <div>
                   <h3>ATR</h3>
                 </div>
+            </div>
+            <div>
+                <Link href="/signal-history">Go to Signal History</Link>
             </div>
         </div>
     );
