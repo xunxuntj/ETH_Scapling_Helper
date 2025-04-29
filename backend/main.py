@@ -61,8 +61,9 @@ async def run_trading_logic():
         
         df_large_tf = pd.DataFrame(klines_data_large_tf, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
         df_large_tf[['open', 'high', 'low', 'close', 'volume']] = df_large_tf[['open', 'high', 'low', 'close', 'volume']].astype(float)
-            continue
-
+        if not klines_data_large_tf:
+          continue
+          
         # Convert klines data to pandas DataFrame
         # Assuming klines_data is a list of lists/tuples in the format [timestamp, open, high, low, close, volume]
         df = pd.DataFrame(klines_data, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
@@ -83,7 +84,6 @@ async def run_trading_logic():
         candle_patterns_detected = candle_patterns.identify_patterns(df)
 
         large_timeframe_trend = vegas_tunnel.calculate_large_timeframe_trend(df_large_tf)
-        pass # Placeholder
 
         # 3. Calculate signal score
         # Extract necessary data from df for scoring
