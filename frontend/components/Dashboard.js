@@ -25,8 +25,14 @@ function Dashboard() {
                   <h3>EMA Double Cross</h3>
                 </div>
             </div>
-            <div>
+            <div> 
                 <h2>Indicators</h2>
+                <div>
+                  <h3>200 EMA</h3>
+                </div>
+                <div>
+                  <h3>ATR</h3>
+                </div>
             </div>
         </div>
     );
