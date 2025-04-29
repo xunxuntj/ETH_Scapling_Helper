@@ -6,14 +6,15 @@ load_dotenv()
 
 class GateioClient:
     def __init__(self):
-        self.api_key = os.getenv("GATEIO_API_KEY")
-        self.secret_key = os.getenv("GATEIO_SECRET_KEY")
-        self.order_api_key = os.getenv("GATEIO_ORDER_API_KEY")
-        self.order_secret_key = os.getenv("GATEIO_ORDER_SECRET_KEY")
+        self.read_key = os.getenv("GATE_IO_READ_ONLY_KEY")
+        self.read_secret = os.getenv("GATE_IO_READ_ONLY_SECRET")
+        self.trade_key = os.getenv("GATE_IO_TRADE_KEY")
+        self.trade_secret = os.getenv("GATE_IO_TRADE_SECRET")
 
-        self.configuration = gate_api.Configuration(
-            key=self.api_key,
-            secret=self.secret_key
+        # Read-only configuration
+        self.read_config = gate_api.Configuration(
+            key=self.read_key,
+            secret=self.read_secret
         )
         self.api_client = gate_api.ApiClient(self.configuration)
         self.spot_api = gate_api.SpotApi(self.api_client)
