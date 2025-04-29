@@ -72,14 +72,17 @@ function Dashboard() {
                   <h3>ATR</h3>
                 </div>
             </div>
-            <div>
+            <div>  
                 <h2>Scoring System</h2>
+                <h3>Current Score</h3>  
+                <h4>Score breakdown:</h4>    
+                <p>Details: The score is calculated based on MACD, RSI, Vegas Tunnel, EMA Double Cross, Candlestick Pattern, Fibonacci Support/Resistance.</p>   
             </div>
             <div>
                 <h2>Capital Management</h2>
             </div>
-            <div/>
-                <Link href="/signal-history">Go to Signal History</Link>
+            <div>
+              <Link href="/signal-history">Go to Signal History</Link>
             </div>
         </div>
     );

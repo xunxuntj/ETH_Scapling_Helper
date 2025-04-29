@@ -4,18 +4,18 @@ import time
 import asyncio
 import pandas as pd
 
-from .database import models, db
-from .signal_engine.vegas_tunnel import VegasTunnel
-from .signal_engine.macd_rsi_logic import MacdRsiLogic
-from .signal_engine.fib_support import FibSupport
-from .signal_engine.atr_trailing import AtrTrailing
-from .signal_engine.candle_patterns import CandlePatterns
-from .signal_engine.scoring_system import ScoringSystem
-from .trading_assistant.trailing_manager import TrailingManager
-from .trading_assistant.telegram_notifier import TelegramNotifier
-from .gateio_client.api_client import GateioClient
-from .config.settings import settings
-from .config.constants import *
+from backend.database import models, db
+from backend.signal_engine.vegas_tunnel import VegasTunnel
+from backend.signal_engine.macd_rsi_logic import MacdRsiLogic
+from backend.signal_engine.fib_support import FibSupport
+from backend.signal_engine.atr_trailing import AtrTrailing
+from backend.signal_engine.candle_patterns import CandlePatterns
+from backend.signal_engine.scoring_system import ScoringSystem
+from backend.trading_assistant.trailing_manager import TrailingManager
+from backend.trading_assistant.telegram_notifier import TelegramNotifier
+from backend.gateio_client.api_client import GateioClient
+from backend.config.settings import settings
+from backend.config.constants import *
 
 app = FastAPI()
 
